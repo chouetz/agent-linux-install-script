@@ -40,8 +40,6 @@ jobs:
           fi
           echo "new_version=$next_version" >> $GITHUB_OUTPUT
           echo "New $version version: $next_version"
-      - name: Checkout repository
-        uses: actions/checkout@v4
       - name: Generate changelog
         run: make pre_release_${{ steps.compute_version.outputs.new_version }}
       - name: Update version
