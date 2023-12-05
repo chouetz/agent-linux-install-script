@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-tags: true
       - name: Compute new version
         id: compute_version
         run: |
@@ -45,7 +47,9 @@ jobs:
       - name: Generate changelog
         run: make pre_release_"${{ needs.compute_version.outputs.new_version }}"
   tag:
-    needs: compute_version
+    needs:
+      - compute_version
+      - changelog
     runs-on: ubuntu-latest
     steps:
       - name: Update version
