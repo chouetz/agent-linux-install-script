@@ -49,7 +49,7 @@ jobs:
       - name: Generate changelog
         run: make pre_release_${{ needs.compute_version.outputs.new_version }}
       - name: Update version
-        run: sed "s/0.0.0/${{ needs.compute_version.outputs.new_version }}/" version.txt
+        run: sed -i "s/0.0.0/${{ needs.compute_version.outputs.new_version }}/" install_script.sh.template install_script_op_worker1.sh
       - name: Create detached commit and release
         run: |
           version=${{ needs.compute_version.outputs.new_version }}
