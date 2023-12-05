@@ -57,11 +57,13 @@ jobs:
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
       - name: Create detached commit and release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           new=${{ needs.compute_version.outputs.new_version }}
           current=${{ needs.compute_version.outputs.current_version }}
           if [ -z "$current" ]; then
-            body="$(cat CHANGELOG.md)"
+            body="$(cat CHANGELOG.rst)"
           else
             body="$(sed -n "/${new}/,/${current}/p" CHANGELOG.rst | tail -n +2 | head -n -1)"
           fi
@@ -69,6 +71,7 @@ jobs:
           git commit -am "${release_name}"
           git tag "$new"
           git push origin "$new"
-          curl -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: Bearer $GITHUB_TOKEN" \
-           -d "{\"tag_name\": \"$new\", \"name\": \"$release_name\", \"body\": \"$body\"}" \
-           "https://api.github.com/repos/chouetz/agent-linux-install-script/releases"
+          gh release create "$new" \
+              --title="$new / $(date "+%Y-%m-%d")" \
+              --generate-notes
+              --latest
