@@ -45,7 +45,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Generate changelog
-        run: make pre_release_"${{ needs.compute_version.outputs.new_version }}"
+        run: |
+          ls
+          make pre_release_${{ needs.compute_version.outputs.new_version }}
   tag:
     needs:
       - compute_version

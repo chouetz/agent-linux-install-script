@@ -18,7 +18,7 @@ else
 IN_PLACE_SED = sed -i
 endif
 
-CUR_VERSION:=$(shell awk -F "=" '/^install_script_version=/{print $$NF}' install_script.sh.template)
+CUR_VERSION:=$(shell git tag --list | sort -t. -k1,1n -k2,2n -k3,3n | tail -1)
 
 install_script.sh: install_script.sh.template
 	export DEPRECATION_MESSAGE
@@ -76,7 +76,7 @@ update_changelog:
 	$(eval SPLIT=$(shell grep -n "^Unreleased" CHANGELOG.rst | cut -d':' -f1))
 	$(eval SPLIT=$(shell expr ${SPLIT} + 2))
 	head -${SPLIT} CHANGELOG.rst > log.rst
-	git log --format=format:" - %s" $(VERSION)..HEAD | egrep -iv "post.*release" | grep -iv fix | cut -d' ' -f2- >> log.rst
+	git log --format=format:" - %s" $(VERSION)..HEAD | cut -d' ' -f2- >> log.rst
 	tail -n +${SPLIT} CHANGELOG.rst >> log.rst
 	mv log.rst CHANGELOG.rst
 
