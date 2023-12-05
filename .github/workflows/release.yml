@@ -7,17 +7,15 @@ on:
         description: "Type of release version"
         required: true
         default: "minor"
+        type: choice
         options:
           - "major"
           - "minor"
           - "patch"
 
 jobs:
-  compute_version:
+  create_new_release:
     runs-on: ubuntu-latest
-    outputs:
-      new_version: ${{ steps.compute_version.outputs.new_version }}
-      current_version: ${{ steps.compute_version.outputs.current_version }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -42,16 +40,12 @@ jobs:
           fi
           echo "new_version=$next_version" >> $GITHUB_OUTPUT
           echo "New $version version: $next_version"
-  changelog_and_tag:
-    needs: compute_version
-    runs-on: ubuntu-latest
-    steps:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Generate changelog
-        run: make pre_release_${{ needs.compute_version.outputs.new_version }}
+        run: make pre_release_${{ steps.compute_version.outputs.new_version }}
       - name: Update version
-        run: sed -i "s/0.0.0/${{ needs.compute_version.outputs.new_version }}/" install_script.sh.template install_script_op_worker1.sh
+        run: sed -i "s/0.0.0/${{ steps.compute_version.outputs.new_version }}/" install_script.sh.template install_script_op_worker1.sh
       - name: Set up Git
         run: |
           git config --global user.email "actions@github.com"
@@ -60,8 +54,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          new=${{ needs.compute_version.outputs.new_version }}
-          current=${{ needs.compute_version.outputs.current_version }}
+          new=${{ steps.compute_version.outputs.new_version }}
+          current=${{ steps.compute_version.outputs.current_version }}
           if [ -z "$current" ]; then
             body="$(cat CHANGELOG.rst)"
           else
