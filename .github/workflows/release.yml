@@ -63,4 +63,4 @@ jobs:
           git push origin "$version"
           curl -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: Bearer $GITHUB_TOKEN" \
            -d "{\"tag_name\": \"$version\", \"name\": \"$release_name\", \"body\": \"$body\"}" \
-           "https://api.github.com/repos/Datadog/agent-linux-install-script/releases"
+           "https://api.github.com/repos/chouetz/agent-linux-install-script/releases"
