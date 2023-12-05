@@ -1,0 +1,66 @@
+---
+name: "Release"
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Type of release version"
+        required: true
+        default: "minor"
+        options:
+          - "major"
+          - "minor"
+          - "patch"
+
+jobs:
+  compute_version:
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.compute_version.outputs.new_version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Compute new version
+        id: compute_version
+        run: |
+          version=${{ github.event.inputs.version }}
+          last_version=$(git tag --list | sort -t. -k1,1n -k2,2n -k3,3n | tail -1)
+          major=$(echo "$last_version" | cut -d"." -f1)
+          minor=$(echo "$last_version" | cut -d"." -f2)
+          patch=$(echo "$last_version" | cut -d"." -f3)
+          if [ "$version" == "major" ]; then
+            next_version="$((major+1)).0.0"
+          elif [ "$version" == "minor" ]; then
+            next_version="$major.$((minor+1)).0"
+          else
+            next_version="$major.$minor.$((patch+1))"
+          fi
+          echo "::set-output name=new_version::$next_version"
+  changelog:
+    needs: compute_version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate changelog
+        run: make pre_release_"${{ needs.compute_version.outputs.new_version }}"
+  tag:
+    needs: compute_version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update version
+        run: sed "s/0.0.0/${{ needs.compute_version.outputs.new_version }}/" version.txt
+      - name: Detached commit
+        run: |
+          version=${{ needs.compute_version.outputs.new_version }}
+          previous=$(git tag --list | sort -t. -k1,1n -k2,2n -k3,3n | tail -1)
+          if [ -z "$previous" ]; then
+            body="$(cat CHANGELOG.md)"
+          else
+            body="$(sed -n "/${version}/,/${previous}/p" CHANGELOG.rst | tail -n +2 | head -n -1)"
+          fi
+          release_name="Release $version"
+          git commit -am "${release_name}"
+          git tag "$version"
+          git push origin "$version"
+          curl -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: Bearer $GITHUB_TOKEN" \
+           -d "{\"tag_name\": \"$version\", \"name\": \"$release_name\", \"body\": \"$body\"}" \
+           "https://api.github.com/repos/Datadog/agent-linux-install-script/releases"

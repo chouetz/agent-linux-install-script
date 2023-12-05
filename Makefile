@@ -72,16 +72,6 @@ pre_release_%:
 	$(MAKE) update_changelog VERSION=${CUR_VERSION}
 	$(IN_PLACE_SED) -e "s|^Unreleased|${NEW_VERSION}|g" CHANGELOG.rst
 
-pre_release_minor:
-	$(eval CUR_MINOR=$(shell echo "${CUR_VERSION}" | tr "." "\n" | awk 'NR==2'))
-	$(eval NEXT_MINOR=$(shell echo ${CUR_MINOR}+1 | bc))
-	$(eval NEW_VERSION=$(shell echo "${CUR_VERSION}" | awk -v repl="${NEXT_MINOR}" 'BEGIN {FS=OFS="."} {$$2=repl; print}' | sed -e 's|.post||'))
-	$(eval CUR_VERSION=$(shell echo "${CUR_VERSION}" | sed -e 's|.post||'))
-	$(IN_PLACE_SED) -e "s|install_script_version=.*|install_script_version=${NEW_VERSION}|g" install_script.sh.template
-	$(IN_PLACE_SED) -e "s|install_script_version=.*|install_script_version=${NEW_VERSION}|g" install_script_op_worker1.sh
-	$(MAKE) update_changelog VERSION=${CUR_VERSION}
-	$(IN_PLACE_SED) -e "s|^Unreleased|${NEW_VERSION}|g" CHANGELOG.rst
-
 update_changelog:
 	$(eval SPLIT=$(shell grep -n "^Unreleased" CHANGELOG.rst | cut -d':' -f1))
 	$(eval SPLIT=$(shell expr ${SPLIT} + 2))
