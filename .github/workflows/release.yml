@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       new_version: ${{ steps.compute_version.outputs.new_version }}
+      current_version: ${{ steps.compute_version.outputs.current_version }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -26,11 +27,12 @@ jobs:
         id: compute_version
         run: |
           version=${{ github.event.inputs.version }}
-          last_version=$(git tag --list | sort -t. -k1,1n -k2,2n -k3,3n | tail -1)
-          echo "Last tagged version: $last_version"
-          major=$(echo "$last_version" | cut -d"." -f1)
-          minor=$(echo "$last_version" | cut -d"." -f2)
-          patch=$(echo "$last_version" | cut -d"." -f3)
+          current_version=$(git tag --list | sort -t. -k1,1n -k2,2n -k3,3n | tail -1)
+          echo "Current version: $current_version"
+          echo "current_version=$current_version" >> $GITHUB_OUTPUT
+          major=$(echo "$current_version" | cut -d"." -f1)
+          minor=$(echo "$current_version" | cut -d"." -f2)
+          patch=$(echo "$current_version" | cut -d"." -f3)
           if [ "$version" == "major" ]; then
             next_version="$((major+1)).0.0"
           elif [ "$version" == "minor" ]; then
@@ -52,17 +54,17 @@ jobs:
         run: sed -i "s/0.0.0/${{ needs.compute_version.outputs.new_version }}/" install_script.sh.template install_script_op_worker1.sh
       - name: Create detached commit and release
         run: |
-          version=${{ needs.compute_version.outputs.new_version }}
-          previous=$(git tag --list | sort -t. -k1,1n -k2,2n -k3,3n | tail -1)
-          if [ -z "$previous" ]; then
+          new=${{ needs.compute_version.outputs.new_version }}
+          current=${{ needs.compute_version.outputs.current_version }}
+          if [ -z "$current" ]; then
             body="$(cat CHANGELOG.md)"
           else
-            body="$(sed -n "/${version}/,/${previous}/p" CHANGELOG.rst | tail -n +2 | head -n -1)"
+            body="$(sed -n "/${new}/,/${current}/p" CHANGELOG.rst | tail -n +2 | head -n -1)"
           fi
-          release_name="Release $version"
+          release_name="Release $new"
           git commit -am "${release_name}"
-          git tag "$version"
-          git push origin "$version"
+          git tag "$new"
+          git push origin "$new"
           curl -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: Bearer $GITHUB_TOKEN" \
-           -d "{\"tag_name\": \"$version\", \"name\": \"$release_name\", \"body\": \"$body\"}" \
+           -d "{\"tag_name\": \"$new\", \"name\": \"$release_name\", \"body\": \"$body\"}" \
            "https://api.github.com/repos/chouetz/agent-linux-install-script/releases"
