@@ -40,23 +40,17 @@ jobs:
           fi
           echo "new_version=$next_version" >> $GITHUB_OUTPUT
           echo "New $version version: $next_version"
-  changelog:
+  changelog_and_tag:
     needs: compute_version
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
       - name: Generate changelog
-        run: |
-          ls
-          make pre_release_${{ needs.compute_version.outputs.new_version }}
-  tag:
-    needs:
-      - compute_version
-      - changelog
-    runs-on: ubuntu-latest
-    steps:
+        run: make pre_release_${{ needs.compute_version.outputs.new_version }}
       - name: Update version
         run: sed "s/0.0.0/${{ needs.compute_version.outputs.new_version }}/" version.txt
-      - name: Detached commit
+      - name: Create detached commit and release
         run: |
           version=${{ needs.compute_version.outputs.new_version }}
           previous=$(git tag --list | sort -t. -k1,1n -k2,2n -k3,3n | tail -1)
