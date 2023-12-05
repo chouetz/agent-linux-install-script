@@ -25,6 +25,7 @@ jobs:
         run: |
           version=${{ github.event.inputs.version }}
           last_version=$(git tag --list | sort -t. -k1,1n -k2,2n -k3,3n | tail -1)
+          echo "Last tagged version: $last_version"
           major=$(echo "$last_version" | cut -d"." -f1)
           minor=$(echo "$last_version" | cut -d"." -f2)
           patch=$(echo "$last_version" | cut -d"." -f3)
@@ -35,7 +36,8 @@ jobs:
           else
             next_version="$major.$minor.$((patch+1))"
           fi
-          echo "::set-output name=new_version::$next_version"
+          echo "new_version=$next_version" >> $GITHUB_OUTPUT
+          echo "New $version version: $next_version"
   changelog:
     needs: compute_version
     runs-on: ubuntu-latest
