@@ -2,8 +2,23 @@
 Release Notes
 =============
 
-Unreleased
+1.25.0
 ================
+
+- fix(ci): remove redundant call to checkout
+- feat(ci): generate properly the changelog and add choices in job execution
+- improvement(ci): sent notes instead of auto-generation
+- fix(ci): use the gh cli instead of rest api
+- fix(ci): add information for git
+- fix(ci): save curent version in env and rename variables
+- fix(ci): use correct file number
+- fix(ci): merge jobs and add a checkout
+- fix(ci) get tag from git on makefile and remove filters
+- fix(ci): force fetching all to be able to retrieve tags
+- fix(ci): fetch tags and improve dependency on tasks
+- improvement(ci): add traces and use new github rules
+- fix(ci): use my own repo
+- feat(ci): add release workflow
 
 1.24.0
 ================
